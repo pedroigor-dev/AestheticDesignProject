@@ -12,6 +12,8 @@ import * as THREE from "three";
 import { FaceRegion, RegionId } from "@/data/atlas";
 import { PointerTilt } from "@/hooks/use-pointer-tilt";
 
+export type AtlasMode = "aesthetic" | "anatomy" | "muscles" | "vessels";
+
 type ConsoleWithClockFilter = typeof console & {
   __aestheticClockFilter?: boolean;
 };
@@ -184,6 +186,7 @@ type ModelFaceSceneProps = {
   viewZoom: number;
   viewControl: ViewControl;
   resetSignal: number;
+  atlasMode: AtlasMode;
 };
 
 export function ModelFaceScene(props: ModelFaceSceneProps) {
@@ -283,6 +286,7 @@ function FaceRig({
   tilt,
   viewControl,
   resetSignal,
+  atlasMode,
   onHover,
   onSelect,
   onReady,
@@ -327,10 +331,17 @@ function FaceRig({
       mesh.receiveShadow = true;
       if (mesh.material) {
         const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-        materials.forEach((material) => {
-          if ("roughness" in material) material.roughness = Math.min(Number(material.roughness ?? 0.55), 0.68);
-          if ("metalness" in material) material.metalness = Math.min(Number(material.metalness ?? 0), 0.08);
+        const clonedMaterials = materials.map((material) => {
+          const clonedMaterial = material.clone();
+          if ("roughness" in clonedMaterial) {
+            clonedMaterial.roughness = Math.min(Number(clonedMaterial.roughness ?? 0.55), 0.68);
+          }
+          if ("metalness" in clonedMaterial) {
+            clonedMaterial.metalness = Math.min(Number(clonedMaterial.metalness ?? 0), 0.08);
+          }
+          return clonedMaterial;
         });
+        mesh.material = Array.isArray(mesh.material) ? clonedMaterials : clonedMaterials[0];
       }
     });
 
@@ -339,6 +350,19 @@ function FaceRig({
       requestAnimationFrame(() => onReady?.());
     }
   }, [clonedScene, onReady]);
+
+  useEffect(() => {
+    clonedScene.traverse((object) => {
+      if (!("isMesh" in object)) return;
+      const mesh = object as THREE.Mesh;
+      const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      materials.forEach((material) => {
+        material.transparent = atlasMode !== "aesthetic";
+        material.opacity = atlasMode === "aesthetic" ? 1 : 0.58;
+        material.depthWrite = atlasMode === "aesthetic";
+      });
+    });
+  }, [atlasMode, clonedScene]);
 
   useFrame((state) => {
     if (!rig.current) return;
@@ -388,6 +412,7 @@ function FaceRig({
           />
         </group>
       </AnimateModelKey>
+      <AtlasModeOverlay mode={atlasMode} />
       {regions.map((region) => (
         <FaceHotspot3D
           key={region.id}
@@ -424,6 +449,285 @@ function AnimateModelKey({
   children: React.ReactNode;
 }) {
   return <group>{children}</group>;
+}
+
+type CurvePath = {
+  id: string;
+  color: string;
+  opacity: number;
+  radius: number;
+  points: [number, number, number][];
+};
+
+const anatomyCurves: CurvePath[] = [
+  {
+    id: "jawline",
+    color: "#9cb7ff",
+    opacity: 0.62,
+    radius: 0.012,
+    points: [
+      [-0.58, -0.32, 0.58],
+      [-0.34, -0.47, 0.72],
+      [0, -0.52, 0.78],
+      [0.34, -0.47, 0.72],
+      [0.58, -0.32, 0.58],
+    ],
+  },
+  {
+    id: "nasal-cartilage",
+    color: "#f3b36f",
+    opacity: 0.72,
+    radius: 0.009,
+    points: [
+      [0, 0.23, 0.83],
+      [0, 0.1, 0.95],
+      [0, -0.04, 0.99],
+      [0, -0.11, 0.92],
+    ],
+  },
+  {
+    id: "brow-line",
+    color: "#d6c57a",
+    opacity: 0.52,
+    radius: 0.008,
+    points: [
+      [-0.46, 0.34, 0.73],
+      [-0.2, 0.38, 0.79],
+      [0, 0.39, 0.8],
+      [0.2, 0.38, 0.79],
+      [0.46, 0.34, 0.73],
+    ],
+  },
+];
+
+const vesselCurves: CurvePath[] = [
+  {
+    id: "left-facial-artery",
+    color: "#e65555",
+    opacity: 0.82,
+    radius: 0.01,
+    points: [
+      [-0.43, -0.42, 0.52],
+      [-0.35, -0.2, 0.66],
+      [-0.28, -0.02, 0.74],
+      [-0.21, 0.15, 0.79],
+      [-0.12, 0.27, 0.83],
+    ],
+  },
+  {
+    id: "right-facial-artery",
+    color: "#e65555",
+    opacity: 0.82,
+    radius: 0.01,
+    points: [
+      [0.43, -0.42, 0.52],
+      [0.35, -0.2, 0.66],
+      [0.28, -0.02, 0.74],
+      [0.21, 0.15, 0.79],
+      [0.12, 0.27, 0.83],
+    ],
+  },
+  {
+    id: "left-temporal-vessel",
+    color: "#79c7e8",
+    opacity: 0.74,
+    radius: 0.008,
+    points: [
+      [-0.47, 0.2, 0.52],
+      [-0.56, 0.36, 0.42],
+      [-0.58, 0.56, 0.34],
+      [-0.48, 0.73, 0.28],
+    ],
+  },
+  {
+    id: "right-temporal-vessel",
+    color: "#79c7e8",
+    opacity: 0.74,
+    radius: 0.008,
+    points: [
+      [0.47, 0.2, 0.52],
+      [0.56, 0.36, 0.42],
+      [0.58, 0.56, 0.34],
+      [0.48, 0.73, 0.28],
+    ],
+  },
+];
+
+function AtlasModeOverlay({ mode }: { mode: AtlasMode }) {
+  if (mode === "aesthetic") return null;
+
+  return (
+    <group>
+      {mode === "anatomy" && (
+        <>
+          <AnatomyPlane
+            label="Tercos faciais"
+            color="#88d8c0"
+            opacity={0.16}
+            position={[0, 0.38, 0.82]}
+            scale={[0.92, 0.22, 1]}
+          />
+          <AnatomyPlane
+            label="Compartimento medio"
+            color="#f3b36f"
+            opacity={0.13}
+            position={[0, 0.02, 0.86]}
+            scale={[0.78, 0.26, 1]}
+          />
+          <AnatomyPlane
+            label="Suporte inferior"
+            color="#9cb7ff"
+            opacity={0.16}
+            position={[0, -0.34, 0.76]}
+            scale={[0.78, 0.2, 1]}
+          />
+          {anatomyCurves.map((curve) => (
+            <AnatomyCurve key={curve.id} curve={curve} />
+          ))}
+        </>
+      )}
+
+      {mode === "muscles" && (
+        <>
+          <AnatomyPlane
+            label="Frontal"
+            color="#d96565"
+            opacity={0.24}
+            position={[0, 0.54, 0.75]}
+            scale={[0.56, 0.28, 1]}
+          />
+          <AnatomyPlane
+            label="Orbicular dos olhos"
+            color="#f07a88"
+            opacity={0.28}
+            position={[-0.22, 0.2, 0.86]}
+            scale={[0.2, 0.1, 1]}
+          />
+          <AnatomyPlane
+            label="Orbicular dos olhos"
+            color="#f07a88"
+            opacity={0.28}
+            position={[0.22, 0.2, 0.86]}
+            scale={[0.2, 0.1, 1]}
+          />
+          <AnatomyPlane
+            label="Orbicular da boca"
+            color="#f07a88"
+            opacity={0.3}
+            position={[0, -0.13, 0.91]}
+            scale={[0.34, 0.13, 1]}
+          />
+          <AnatomyPlane
+            label="Masseter"
+            color="#d96565"
+            opacity={0.34}
+            position={[-0.46, -0.17, 0.56]}
+            rotation={[0, -0.42, 0]}
+            scale={[0.2, 0.32, 1]}
+          />
+          <AnatomyPlane
+            label="Masseter"
+            color="#d96565"
+            opacity={0.34}
+            position={[0.46, -0.17, 0.56]}
+            rotation={[0, 0.42, 0]}
+            scale={[0.2, 0.32, 1]}
+          />
+        </>
+      )}
+
+      {mode === "vessels" && (
+        <>
+          {vesselCurves.map((curve) => (
+            <AnatomyCurve key={curve.id} curve={curve} />
+          ))}
+          <VesselPoint position={[-0.18, 0.25, 0.86]} label="Supraorbital" />
+          <VesselPoint position={[0.18, 0.25, 0.86]} label="Supraorbital" />
+          <VesselPoint position={[-0.32, -0.02, 0.78]} label="Facial" />
+          <VesselPoint position={[0.32, -0.02, 0.78]} label="Facial" />
+        </>
+      )}
+    </group>
+  );
+}
+
+function AnatomyPlane({
+  label,
+  color,
+  opacity,
+  position,
+  rotation = [0, 0, 0],
+  scale,
+}: {
+  label: string;
+  color: string;
+  opacity: number;
+  position: [number, number, number];
+  rotation?: [number, number, number];
+  scale: [number, number, number];
+}) {
+  return (
+    <group position={position} rotation={rotation}>
+      <mesh scale={scale} renderOrder={3}>
+        <circleGeometry args={[1, 64]} />
+        <meshBasicMaterial
+          color={color}
+          transparent
+          opacity={opacity}
+          depthWrite={false}
+          depthTest={false}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      <Html center position={[0, scale[1] + 0.06, 0]} className="pointer-events-none select-none">
+        <span className="whitespace-nowrap rounded-full border border-black/10 bg-[#fffaf0]/86 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-black/55 shadow-lg shadow-black/8 backdrop-blur-md">
+          {label}
+        </span>
+      </Html>
+    </group>
+  );
+}
+
+function AnatomyCurve({ curve }: { curve: CurvePath }) {
+  const path = useMemo(
+    () => new THREE.CatmullRomCurve3(curve.points.map((point) => new THREE.Vector3(...point))),
+    [curve.points],
+  );
+
+  return (
+    <mesh renderOrder={4}>
+      <tubeGeometry args={[path, 44, curve.radius, 8, false]} />
+      <meshBasicMaterial
+        color={curve.color}
+        transparent
+        opacity={curve.opacity}
+        depthWrite={false}
+        depthTest={false}
+      />
+    </mesh>
+  );
+}
+
+function VesselPoint({
+  position,
+  label,
+}: {
+  position: [number, number, number];
+  label: string;
+}) {
+  return (
+    <group position={position}>
+      <mesh renderOrder={5}>
+        <sphereGeometry args={[0.032, 18, 10]} />
+        <meshBasicMaterial color="#fff8ec" transparent opacity={0.9} depthWrite={false} />
+      </mesh>
+      <Html center position={[0.1, 0.04, 0]} className="pointer-events-none select-none">
+        <span className="whitespace-nowrap rounded-full border border-[#e65555]/20 bg-[#fffaf0]/88 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#b94343] shadow-lg shadow-black/8 backdrop-blur-md">
+          {label}
+        </span>
+      </Html>
+    </group>
+  );
 }
 
 type InfoLandmark3DProps = {

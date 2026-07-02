@@ -8,6 +8,16 @@ test("renders the interactive face atlas and changes regions", async ({ page }) 
   await expect(page.getByText("Lendo proporcoes faciais")).toBeHidden();
   const detailsPanel = page.getByRole("complementary", { name: "Detalhes da regiao" });
   await expect(detailsPanel).toContainText("Escolha uma regiao");
+  await expect(page.getByRole("button", { name: "Estetica" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+
+  await page.getByRole("button", { name: "Musculos" }).click();
+  await expect(page.getByRole("button", { name: "Musculos" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
 
   await page.locator('nav button[title="Nariz"]').click();
 

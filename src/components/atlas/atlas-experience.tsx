@@ -11,6 +11,7 @@ import {
   useState,
 } from "react";
 import {
+  AtlasMode,
   ModelFaceScene,
   ViewControl,
 } from "@/components/atlas/model-face-scene";
@@ -136,11 +137,19 @@ const NODES = [
   { cx: 153, cy: 151, delay: "0.68s, 1.35s" },
 ];
 
+const atlasModes: Array<{ id: AtlasMode; label: string }> = [
+  { id: "aesthetic", label: "Estetica" },
+  { id: "anatomy", label: "Anatomia" },
+  { id: "muscles", label: "Musculos" },
+  { id: "vessels", label: "Vasos" },
+];
+
 /** Diagrama minimalista de proporcao facial: contorno, eixo de simetria,
  *  linhas de "tercos" e pontos de referencia — em vez de uma mira/reticula. */
 export function AtlasExperience() {
   const { regions, selectedId, selectedRegion, selectRegion } = useAtlasSelection();
   const [hoveredId, setHoveredId] = useState<RegionId | null>(null);
+  const [atlasMode, setAtlasMode] = useState<AtlasMode>("aesthetic");
   const [viewZoom, setViewZoom] = useState(0.9);
   const [isDragging, setIsDragging] = useState(false);
   const [isModelReady, setIsModelReady] = useState(false);
@@ -286,6 +295,7 @@ export function AtlasExperience() {
             viewZoom={viewZoom}
             viewControl={viewControl}
             resetSignal={resetSignal}
+            atlasMode={atlasMode}
             onHover={setHoveredId}
             onSelect={handleSelectRegion}
             onReady={handleModelReady}
@@ -297,12 +307,50 @@ export function AtlasExperience() {
         <RegionCallouts region={selectedRegion} />
         <ZoomPill zoom={viewZoom} />
         <ResetButton onReset={handleResetView} />
+        <ModeSwitcher mode={atlasMode} onChange={setAtlasMode} />
         <RegionDock regions={regions} selectedId={selectedId} onSelect={handleSelectRegion} />
       </div>
 
       <RegionPanel region={selectedRegion} />
       <AtlasIntroLoaderWrapper show={showIntro} ready={isModelReady || introElapsed} />
     </section>
+  );
+}
+
+function ModeSwitcher({
+  mode,
+  onChange,
+}: {
+  mode: AtlasMode;
+  onChange: (mode: AtlasMode) => void;
+}) {
+  return (
+    <div
+      data-scene-ui
+      className="absolute left-1/2 top-[86px] z-30 hidden -translate-x-1/2 rounded-full border border-black/10 bg-[#fffaf0]/78 p-1 shadow-2xl shadow-black/8 backdrop-blur-xl md:flex lg:top-7"
+      aria-label="Modo de visualizacao"
+      role="group"
+    >
+      {atlasModes.map((item) => {
+        const active = item.id === mode;
+
+        return (
+          <button
+            key={item.id}
+            type="button"
+            aria-pressed={active}
+            onClick={() => onChange(item.id)}
+            className={`h-9 rounded-full px-4 text-[11px] font-semibold uppercase tracking-[0.16em] transition ${
+              active
+                ? "bg-[#14110e] text-[#fffaf0] shadow-lg shadow-black/15"
+                : "text-black/45 hover:bg-white/70 hover:text-black/70"
+            }`}
+          >
+            {item.label}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -314,7 +362,7 @@ function ResetButton({ onReset }: { onReset: () => void }) {
       aria-label="Resetar camera"
       title="Resetar camera"
       onClick={onReset}
-      className="absolute left-4 top-20 z-30 grid size-10 place-items-center rounded-full border border-black/10 bg-[#fffaf0]/78 text-black/52 shadow-xl shadow-black/5 backdrop-blur-xl transition hover:scale-105 hover:bg-white hover:text-black/72 focus:outline-none focus:ring-2 focus:ring-[#88d8c0]/55 md:left-[210px] lg:left-[250px] lg:top-[30px]"
+      className="absolute left-4 top-32 z-30 grid size-10 place-items-center rounded-full border border-black/10 bg-[#fffaf0]/78 text-black/52 shadow-xl shadow-black/5 backdrop-blur-xl transition hover:scale-105 hover:bg-white hover:text-black/72 focus:outline-none focus:ring-2 focus:ring-[#88d8c0]/55 lg:left-8 lg:top-[136px]"
     >
       <RotateCcw className="size-4" />
     </button>
@@ -510,4 +558,3 @@ export function AtlasIntroLoader({ ready }: { ready: boolean }) {
 export function AtlasIntroLoaderWrapper({ show, ready }: { show: boolean; ready: boolean }) {
   return <AnimatePresence>{show && <AtlasIntroLoader ready={ready} />}</AnimatePresence>;
 }
-
