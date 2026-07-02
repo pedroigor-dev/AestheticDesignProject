@@ -25,6 +25,8 @@ export function FaceHotspot3D({
   onSelect,
 }: FaceHotspot3DProps) {
   const ref = useRef<THREE.Group>(null);
+  const touchStart = useRef<{ pointerId: number; x: number; y: number } | null>(null);
+  const lastTouchAt = useRef(0);
 
   useFrame((state) => {
     if (!ref.current) return;
@@ -46,12 +48,34 @@ export function FaceHotspot3D({
   };
 
   const handleSelect = (event: ThreeEvent<MouseEvent>) => {
+    if (Date.now() - lastTouchAt.current < 500) return;
     event.stopPropagation();
     onSelect(region.id);
   };
 
-  const handleTouchSelect = (event: ThreeEvent<PointerEvent>) => {
+  const handleTouchStart = (event: ThreeEvent<PointerEvent>) => {
     if ((event.nativeEvent as PointerEvent).pointerType !== "touch") return;
+    touchStart.current = {
+      pointerId: event.pointerId,
+      x: event.nativeEvent.clientX,
+      y: event.nativeEvent.clientY,
+    };
+  };
+
+  const handleTouchEnd = (event: ThreeEvent<PointerEvent>) => {
+    if ((event.nativeEvent as PointerEvent).pointerType !== "touch") return;
+
+    const start = touchStart.current;
+    touchStart.current = null;
+    lastTouchAt.current = Date.now();
+    if (!start || start.pointerId !== event.pointerId) return;
+
+    const distance = Math.hypot(
+      event.nativeEvent.clientX - start.x,
+      event.nativeEvent.clientY - start.y,
+    );
+    if (distance > 8) return;
+
     event.stopPropagation();
     onSelect(region.id);
   };
@@ -60,7 +84,11 @@ export function FaceHotspot3D({
     <group ref={ref} position={hotspotPositions[region.id]}>
       <mesh
         scale={hotspotScales[region.id]}
-        onPointerDown={handleTouchSelect}
+        onPointerDown={handleTouchStart}
+        onPointerUp={handleTouchEnd}
+        onPointerCancel={() => {
+          touchStart.current = null;
+        }}
         onClick={handleSelect}
         onPointerOver={handleOver}
         onPointerOut={handleOut}
