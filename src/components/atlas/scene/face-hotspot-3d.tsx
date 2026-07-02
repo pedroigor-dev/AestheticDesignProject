@@ -11,6 +11,7 @@ type FaceHotspot3DProps = {
   region: FaceRegion;
   active: boolean;
   hovered: boolean;
+  showMobileMarker: boolean;
   onHover: (id: RegionId | null) => void;
   onSelect: (id: RegionId) => void;
 };
@@ -19,6 +20,7 @@ export function FaceHotspot3D({
   region,
   active,
   hovered,
+  showMobileMarker,
   onHover,
   onSelect,
 }: FaceHotspot3DProps) {
@@ -57,6 +59,19 @@ export function FaceHotspot3D({
         <sphereGeometry args={[1, 32, 16]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
+      {showMobileMarker && !active && !hovered && (
+        <mesh userData={{ testId: `mobile-marker-${region.id}` }}>
+          <sphereGeometry args={[0.026, 24, 12]} />
+          <meshStandardMaterial
+            color={region.accent}
+            emissive={region.accent}
+            emissiveIntensity={0.32}
+            opacity={0.78}
+            roughness={0.28}
+            transparent
+          />
+        </mesh>
+      )}
       {(active || hovered) && (
         <>
           <mesh>

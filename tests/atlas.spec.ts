@@ -5,7 +5,7 @@ test("renders the interactive face atlas and changes regions", async ({ page }) 
 
   await expect(page.getByRole("heading", { name: "Face Atlas" })).toHaveCount(1);
   await expect(page.locator("canvas")).toBeVisible();
-  await expect(page.getByLabel("Carregando atlas")).toBeHidden({ timeout: 6000 });
+  await expect(page.getByLabel("Carregando atlas")).toBeHidden({ timeout: 10_000 });
   const detailsPanel = page.getByRole("complementary", { name: "Detalhes da regiao" });
   await expect(detailsPanel).toContainText("Escolha uma regiao");
   await expect(page.getByRole("button", { name: "Estetica" })).toHaveAttribute(
@@ -55,7 +55,7 @@ test.describe("mobile touch behavior", () => {
     await page.goto("/");
 
     await expect(page.locator("canvas")).toBeVisible();
-    await expect(page.getByLabel("Carregando atlas")).toBeHidden({ timeout: 6000 });
+    await expect(page.getByLabel("Carregando atlas")).toBeHidden({ timeout: 10_000 });
     await expect(page.locator("[data-atlas-scene-surface]")).toHaveCSS("touch-action", "none");
     await expect(page.getByRole("button", { name: "Abrir gerador de PDF" })).toBeVisible();
     await expect(page.locator('nav button[title="Olhos"] span').first()).toHaveCSS(

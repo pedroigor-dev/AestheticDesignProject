@@ -94,6 +94,8 @@ export function FaceRig({
     });
   }, [atlasMode, clonedScene]);
 
+  const showMobileMarkers = size.width < 768;
+
   useFrame((state) => {
     if (!rig.current) return;
     const pose = selectedRegion
@@ -151,6 +153,7 @@ export function FaceRig({
           region={region}
           active={region.id === selectedRegion?.id}
           hovered={region.id === hoveredId}
+          showMobileMarker={showMobileMarkers}
           onHover={onHover}
           onSelect={clearLandmarkAndSelectRegion}
         />
