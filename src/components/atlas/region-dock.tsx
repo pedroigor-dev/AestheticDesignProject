@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { FaceRegion, RegionId } from "@/data/atlas";
 
 type RegionDockProps = {
@@ -25,19 +26,19 @@ export function RegionDock({ regions, selectedId, onSelect }: RegionDockProps) {
             title={region.name}
             aria-pressed={active}
             onClick={() => onSelect(region.id)}
-            className="group flex h-12 min-w-12 shrink-0 items-center justify-center gap-2 rounded-full px-3 text-sm font-medium text-black/58 transition hover:bg-black/[0.04] hover:text-black focus:outline-none focus:ring-2 focus:ring-black/20 data-[active=true]:min-w-[128px] data-[active=true]:text-[#11100d]"
+            className="group flex h-12 min-w-12 shrink-0 items-center justify-center gap-2 rounded-full px-2 text-sm font-medium text-black/58 transition hover:text-black focus:outline-none focus:ring-2 focus:ring-black/20 md:px-3 md:hover:bg-black/[0.04] md:data-[active=true]:min-w-[128px] md:data-[active=true]:text-[#11100d]"
             data-active={active}
           >
             <span
-              className="grid size-8 place-items-center rounded-full transition"
+              className="grid size-8 place-items-center rounded-full bg-transparent transition md:bg-[var(--region-icon-bg)]"
               style={{
-                backgroundColor: active ? `${region.accent}40` : "rgba(0,0,0,0.05)",
+                "--region-icon-bg": active ? `${region.accent}40` : "rgba(0,0,0,0.05)",
                 color: active ? region.accent : "rgba(0,0,0,0.55)",
-              }}
+              } as CSSProperties}
             >
               <Icon className="size-4" strokeWidth={1.9} />
             </span>
-            <span className="hidden whitespace-nowrap group-data-[active=true]:block">
+            <span className="hidden whitespace-nowrap md:group-data-[active=true]:block">
               {region.shortName}
             </span>
           </button>

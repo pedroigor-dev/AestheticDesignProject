@@ -57,5 +57,10 @@ test.describe("mobile touch behavior", () => {
     await expect(page.locator("canvas")).toBeVisible();
     await expect(page.getByLabel("Carregando atlas")).toBeHidden({ timeout: 6000 });
     await expect(page.locator("[data-atlas-scene-surface]")).toHaveCSS("touch-action", "none");
+    await expect(page.getByRole("button", { name: "Abrir gerador de PDF" })).toBeVisible();
+    await expect(page.locator('nav button[title="Olhos"] span').first()).toHaveCSS(
+      "background-color",
+      "rgba(0, 0, 0, 0)",
+    );
   });
 });

@@ -148,7 +148,7 @@ export function AtlasPdfPanel({ regions, selectedId }: AtlasPdfPanelProps) {
         data-scene-ui
         aria-label="Abrir gerador de PDF"
         onClick={() => setOpen(true)}
-        className="absolute right-4 top-20 z-30 hidden h-10 items-center gap-2 rounded-full border border-black/10 bg-[#fffaf0]/78 px-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-black/55 shadow-xl shadow-black/5 backdrop-blur-xl transition hover:scale-[1.02] hover:bg-white hover:text-black/75 focus:outline-none focus:ring-2 focus:ring-[#88d8c0]/55 md:flex lg:right-[462px] lg:top-[136px]"
+        className="absolute right-4 top-4 z-30 flex h-10 items-center gap-2 rounded-full border border-black/10 bg-[#fffaf0]/78 px-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-black/55 shadow-xl shadow-black/5 backdrop-blur-xl transition hover:scale-[1.02] hover:bg-white hover:text-black/75 focus:outline-none focus:ring-2 focus:ring-[#88d8c0]/55 md:top-20 lg:right-[462px] lg:top-[136px]"
       >
         <FileText className="size-4" />
         PDF
@@ -285,7 +285,7 @@ function writeBullets(
 
   items.forEach((item) => {
     const lines = pdf.splitTextToSize(item, width - 5) as string[];
-    pdf.text("•", x, y);
+    pdf.text("-", x, y);
     pdf.text(lines, x + 5, y);
     y += lines.length * lineHeight + 1.2;
   });
