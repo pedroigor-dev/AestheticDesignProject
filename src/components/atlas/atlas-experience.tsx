@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { RotateCcw } from "lucide-react";
 import {
   PointerEvent,
+  TouchEvent,
   WheelEvent,
   useCallback,
   useEffect,
@@ -30,6 +31,8 @@ const atlasModes: Array<{ id: AtlasMode; label: string }> = [
   { id: "vessels", label: "Vasos" },
 ];
 
+const clampZoom = (value: number) => Number(Math.min(1.22, Math.max(0.72, value)).toFixed(2));
+
 /** Diagrama minimalista de proporcao facial: contorno, eixo de simetria,
  *  linhas de "tercos" e pontos de referencia — em vez de uma mira/reticula. */
 export function AtlasExperience() {
@@ -50,6 +53,8 @@ export function AtlasExperience() {
   const dragPoint = useRef({ x: 0, y: 0 });
   const dragOrigin = useRef({ x: 0, y: 0 });
   const isPointerDown = useRef(false);
+  const pinchDistance = useRef(0);
+  const pinchZoom = useRef(0.9);
   const { tilt, handlePointerMove, resetTilt } = usePointerTilt();
   const showIntro = !introElapsed;
 
@@ -84,9 +89,7 @@ export function AtlasExperience() {
   const handleWheel = useCallback((event: WheelEvent<HTMLElement>) => {
     event.preventDefault();
     const delta = event.deltaY > 0 ? -0.06 : 0.06;
-    setViewZoom((current) =>
-      Number(Math.min(1.22, Math.max(0.72, current + delta)).toFixed(2)),
-    );
+    setViewZoom((current) => clampZoom(current + delta));
   }, []);
 
   const handleResetView = useCallback(() => {
@@ -105,6 +108,7 @@ export function AtlasExperience() {
 
   const handlePointerDown = useCallback((event: PointerEvent<HTMLElement>) => {
     if (event.button !== 0) return;
+    if (event.pointerType === "touch") return;
     const target = event.target as HTMLElement;
     if (target.closest("button, nav, aside, [data-scene-ui]")) return;
 
@@ -141,6 +145,96 @@ export function AtlasExperience() {
     [handlePointerMove, isDragging],
   );
 
+  const handleTouchStart = useCallback(
+    (event: TouchEvent<HTMLElement>) => {
+      const target = event.target as HTMLElement;
+      if (target.closest("button, nav, aside, [data-scene-ui]")) return;
+
+      event.preventDefault();
+      if (event.touches.length === 1) {
+        const touch = event.touches[0];
+        isPointerDown.current = true;
+        dragPoint.current = { x: touch.clientX, y: touch.clientY };
+        dragOrigin.current = { x: touch.clientX, y: touch.clientY };
+        return;
+      }
+
+      if (event.touches.length >= 2) {
+        isPointerDown.current = false;
+        setIsDragging(false);
+        const first = event.touches[0];
+        const second = event.touches[1];
+        pinchDistance.current = Math.hypot(
+          second.clientX - first.clientX,
+          second.clientY - first.clientY,
+        );
+        pinchZoom.current = viewZoom;
+      }
+    },
+    [viewZoom],
+  );
+
+  const handleTouchMove = useCallback(
+    (event: TouchEvent<HTMLElement>) => {
+      const target = event.target as HTMLElement;
+      if (target.closest("button, nav, aside, [data-scene-ui]")) return;
+
+      event.preventDefault();
+      if (event.touches.length >= 2) {
+        const first = event.touches[0];
+        const second = event.touches[1];
+        const distance = Math.hypot(
+          second.clientX - first.clientX,
+          second.clientY - first.clientY,
+        );
+        if (pinchDistance.current > 0) {
+          setViewZoom(clampZoom(pinchZoom.current * (distance / pinchDistance.current)));
+        }
+        return;
+      }
+
+      if (event.touches.length !== 1 || !isPointerDown.current) return;
+      const touch = event.touches[0];
+      const dx = touch.clientX - dragPoint.current.x;
+      const dy = touch.clientY - dragPoint.current.y;
+      const totalDx = touch.clientX - dragOrigin.current.x;
+      const totalDy = touch.clientY - dragOrigin.current.y;
+      const hasDragged = Math.hypot(totalDx, totalDy) > 4;
+      if (!isDragging && !hasDragged) return;
+
+      if (!isDragging) setIsDragging(true);
+      dragPoint.current = { x: touch.clientX, y: touch.clientY };
+
+      setViewControl((current) => ({
+        yaw: Math.min(1.05, Math.max(-1.05, current.yaw + dx * 0.0045)),
+        pitch: Math.min(0.32, Math.max(-0.32, current.pitch + dy * 0.0018)),
+        panX: Math.min(0.48, Math.max(-0.48, current.panX + dx * 0.0012)),
+        panY: Math.min(0.42, Math.max(-0.42, current.panY - dy * 0.0014)),
+      }));
+    },
+    [isDragging],
+  );
+
+  const handleTouchEnd = useCallback((event: TouchEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement;
+    if (target.closest("button, nav, aside, [data-scene-ui]")) return;
+
+    event.preventDefault();
+
+    if (event.touches.length === 1) {
+      const touch = event.touches[0];
+      isPointerDown.current = true;
+      dragPoint.current = { x: touch.clientX, y: touch.clientY };
+      dragOrigin.current = { x: touch.clientX, y: touch.clientY };
+      pinchDistance.current = 0;
+      return;
+    }
+
+    pinchDistance.current = 0;
+    isPointerDown.current = false;
+    setIsDragging(false);
+  }, []);
+
   const stopDragging = useCallback(() => {
     isPointerDown.current = false;
     setIsDragging(false);
@@ -149,13 +243,18 @@ export function AtlasExperience() {
   return (
     <section className="relative flex h-[100svh] flex-col overflow-hidden lg:flex-row">
       <div
-        className={`relative min-h-0 flex-1 overflow-hidden ${
+        data-atlas-scene-surface
+        className={`relative min-h-0 flex-1 touch-none select-none overflow-hidden overscroll-contain ${
           isDragging ? "cursor-grabbing" : "cursor-grab"
         }`}
         onPointerDown={handlePointerDown}
         onPointerMove={handleScenePointerMove}
         onPointerUp={stopDragging}
         onPointerCancel={stopDragging}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
         onPointerLeave={(event) => {
           resetTilt();
           stopDragging();

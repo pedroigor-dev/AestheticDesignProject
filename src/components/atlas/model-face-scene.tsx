@@ -29,7 +29,7 @@ if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
 
 export function ModelFaceScene(props: ModelFaceSceneProps) {
   return (
-    <div className="absolute inset-0 isolate overflow-hidden bg-[#f6f1e8]">
+    <div className="absolute inset-0 isolate touch-none overflow-hidden overscroll-contain bg-[#f6f1e8]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_56%_30%,rgba(136,216,192,.25),transparent_26%),radial-gradient(circle_at_42%_76%,rgba(240,122,136,.16),transparent_28%)]" />
       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(17,16,13,.05)_1px,transparent_1px),linear-gradient(180deg,rgba(17,16,13,.035)_1px,transparent_1px)] bg-size-[72px_72px] opacity-40" />
 
@@ -42,7 +42,7 @@ export function ModelFaceScene(props: ModelFaceSceneProps) {
           powerPreference: "high-performance",
           preserveDrawingBuffer: true,
         }}
-        className="relative z-10 h-full w-full"
+        className="relative z-10 h-full w-full touch-none"
       >
         <Suspense fallback={<SceneFallback />}>
           <color attach="background" args={["#f6f1e8"]} />
