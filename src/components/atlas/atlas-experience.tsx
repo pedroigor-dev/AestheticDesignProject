@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { AnimatePresence, motion, useReducedMotion, Variants } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Activity, RotateCcw } from "lucide-react";
 import {
   PointerEvent,
@@ -21,121 +21,6 @@ import { RegionPanel } from "@/components/atlas/region-panel";
 import { useAtlasSelection } from "@/hooks/use-atlas-selection";
 import { usePointerTilt } from "@/hooks/use-pointer-tilt";
 import { RegionId } from "@/data/atlas";
-
-const stageVariants: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.04 } },
-  exit: {
-    opacity: [1, 1, 0],
-    transition: { duration: 0.95, times: [0, 0.8, 1], staggerChildren: 0.03 },
-  },
-};
-
-const sceneVariants: Variants = {
-  hidden: { opacity: 0, scale: 0.22, z: -1100, rotateX: 12, filter: "blur(20px)" },
-  visible: {
-    opacity: 1,
-    scale: [0.22, 1.08, 1],
-    z: [-1100, 30, 0],
-    rotateX: [12, -3, 0],
-    filter: ["blur(20px)", "blur(3px)", "blur(0px)"],
-    transition: { duration: 0.86, times: [0, 0.55, 1], ease: [0.16, 1, 0.3, 1] },
-  },
-  exit: {
-    scale: [1, 1.12, 7.5],
-    z: [0, 20, 2600],
-    filter: ["blur(0px)", "blur(0px)", "blur(50px)"],
-    opacity: [1, 1, 0],
-    transition: { duration: 0.95, times: [0, 0.18, 1], ease: [0.6, 0, 0.85, 0.2] },
-  },
-};
-
-const ringVariants: Variants = {
-  hidden: { opacity: 0, scale: 0.4 },
-  visible: {
-    opacity: [0, 0.8, 0],
-    scale: [0.4, 2.2, 2.4],
-    transition: { duration: 0.68, delay: 0.48, ease: "easeOut" },
-  },
-  exit: { opacity: 0 },
-};
-
-const flashVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: [0, 0.2, 0],
-    transition: { duration: 0.38, delay: 0.46, times: [0, 0.45, 1] },
-  },
-  exit: {
-    opacity: [0, 0.32, 0],
-    transition: { duration: 0.42, delay: 0.26, times: [0, 0.5, 1] },
-  },
-};
-
-const hudVariants: Variants = {
-  hidden: { opacity: 0, y: 16 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.52, delay: 0.52, ease: [0.22, 1, 0.36, 1] },
-  },
-  exit: { opacity: 0, y: -10, transition: { duration: 0.26, ease: "easeIn" } },
-};
-
-const reducedSceneVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 0.3 } },
-  exit: { opacity: 0, transition: { duration: 0.3 } },
-};
-
-const reducedHudVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 0.3, delay: 0.15 } },
-  exit: { opacity: 0, transition: { duration: 0.2 } },
-};
-
-const hiddenVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 0 },
-  exit: { opacity: 0 },
-};
-
-function useLoadProgress(ready: boolean) {
-  const [percent, setPercent] = useState(0);
-  const targetRef = useRef(0);
-  const rafRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    const bump = window.setInterval(() => {
-      targetRef.current = ready
-        ? 100
-        : Math.min(95, targetRef.current + (Math.random() * 1.6 + 0.4));
-    }, 70);
-
-    const tick = () => {
-      setPercent((current) => {
-        const next = current + (targetRef.current - current) * 0.12;
-        return ready && next > 99.3 ? 100 : next;
-      });
-      rafRef.current = window.requestAnimationFrame(tick);
-    };
-    rafRef.current = window.requestAnimationFrame(tick);
-
-    return () => {
-      window.clearInterval(bump);
-      if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
-    };
-  }, [ready]);
-
-  return Math.round(percent);
-}
-
-const NODES = [
-  { cx: 47, cy: 97, delay: "0.55s, 0.95s" },
-  { cx: 153, cy: 97, delay: "0.55s, 0.95s" },
-  { cx: 47, cy: 151, delay: "0.68s, 1.35s" },
-  { cx: 153, cy: 151, delay: "0.68s, 1.35s" },
-];
 
 const atlasModes: Array<{ id: AtlasMode; label: string }> = [
   { id: "aesthetic", label: "Estetica" },
@@ -388,168 +273,63 @@ function Header() {
     </header>
   );
 }
-function FacialBlueprint({ reduceMotion }: { reduceMotion: boolean }) {
-  const drawn = reduceMotion;
 
+export function AtlasIntroLoader({ ready }: { ready: boolean }) {
   return (
-    <div className="relative h-48 w-40">
+    <motion.div
+      className="fixed inset-0 z-[2147483647] grid place-items-center overflow-hidden bg-[#f6f1e8]"
+      initial={{ opacity: 1 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 0.28, ease: "easeOut" } }}
+      aria-busy={!ready}
+      aria-label="Carregando atlas"
+    >
       <style>{`
-        @keyframes node-in{ to{ opacity:1; } }
-        @keyframes node-pulse{ 0%,100%{ transform:scale(1); opacity:.85; } 50%{ transform:scale(1.6); opacity:.25; } }
-        @keyframes scan-sweep{
-          0%   { transform:translateY(36px); opacity:0; }
-          8%   { opacity:.5; }
-          48%  { transform:translateY(160px); opacity:.5; }
-          58%  { opacity:0; }
-          100% { opacity:0; transform:translateY(36px); }
+        .atlas-loading svg polyline {
+          fill: none;
+          stroke-width: 3;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+
+        .atlas-loading svg polyline#back {
+          stroke: #ff4d5033;
+        }
+
+        .atlas-loading svg polyline#front {
+          stroke: #ff4d4f;
+          stroke-dasharray: 48, 144;
+          stroke-dashoffset: 192;
+          animation: atlas-dash 1.4s linear infinite;
+        }
+
+        @keyframes atlas-dash {
+          72.5% {
+            opacity: 0;
+          }
+
+          to {
+            stroke-dashoffset: 0;
+          }
         }
       `}</style>
 
-      <svg viewBox="0 0 200 240" className="h-full w-full text-[#88d8c0]" fill="none">
-        <motion.ellipse
-          cx={100}
-          cy={124}
-          rx={56}
-          ry={80}
-          stroke="currentColor"
-          strokeWidth={1.4}
-          initial={drawn ? { pathLength: 1, opacity: 0.7 } : { pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 0.7 }}
-          transition={drawn ? { duration: 0 } : { duration: 0.85, delay: 0.08, ease: [0.65, 0, 0.35, 1] }}
-        />
-
-        <motion.line
-          x1={100}
-          y1={18}
-          x2={100}
-          y2={230}
-          stroke="currentColor"
-          strokeWidth={1}
-          initial={drawn ? { pathLength: 1, opacity: 0.4 } : { pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 0.4 }}
-          transition={drawn ? { duration: 0 } : { duration: 0.85, delay: 0.22, ease: [0.65, 0, 0.35, 1] }}
-        />
-        <line x1={94} y1={18} x2={106} y2={18} stroke="currentColor" strokeWidth={1} opacity={0.4} />
-        <line x1={94} y1={230} x2={106} y2={230} stroke="currentColor" strokeWidth={1} opacity={0.4} />
-
-        <motion.line
-          x1={40}
-          y1={97}
-          x2={160}
-          y2={97}
-          stroke="currentColor"
-          strokeWidth={1}
-          initial={drawn ? { pathLength: 1, opacity: 0.45 } : { pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 0.45 }}
-          transition={drawn ? { duration: 0 } : { duration: 0.7, delay: 0.3, ease: [0.65, 0, 0.35, 1] }}
-        />
-        <motion.line
-          x1={40}
-          y1={151}
-          x2={160}
-          y2={151}
-          stroke="currentColor"
-          strokeWidth={1}
-          initial={drawn ? { pathLength: 1, opacity: 0.45 } : { pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 0.45 }}
-          transition={drawn ? { duration: 0 } : { duration: 0.7, delay: 0.38, ease: [0.65, 0, 0.35, 1] }}
-        />
-
-        <line x1={40} y1={92} x2={40} y2={102} stroke="currentColor" strokeWidth={1} opacity={0.4} />
-        <line x1={160} y1={92} x2={160} y2={102} stroke="currentColor" strokeWidth={1} opacity={0.4} />
-        <line x1={40} y1={146} x2={40} y2={156} stroke="currentColor" strokeWidth={1} opacity={0.4} />
-        <line x1={160} y1={146} x2={160} y2={156} stroke="currentColor" strokeWidth={1} opacity={0.4} />
-
-        {NODES.map((node, i) => (
-          <circle
-            key={i}
-            cx={node.cx}
-            cy={node.cy}
-            r={2.6}
-            fill="currentColor"
-            style={
-              reduceMotion
-                ? { opacity: 0.85 }
-                : {
-                    opacity: 0,
-                    animation: "node-in .4s ease-out forwards, node-pulse 2.6s ease-in-out infinite",
-                    animationDelay: node.delay,
-                  }
-            }
+      <motion.div
+        className="atlas-loading"
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.22, ease: "easeOut" }}
+      >
+        <svg width="64px" height="48px" viewBox="0 0 64 48" role="img" aria-hidden="true">
+          <polyline
+            points="0.157 23.954, 14 23.954, 21.843 48, 43 0, 50 24, 64 24"
+            id="back"
           />
-        ))}
-      </svg>
-
-      {!reduceMotion && (
-        <div
-          className="absolute left-[18px] h-[2px] w-[124px] rounded-full"
-          style={{
-            background: "linear-gradient(90deg, transparent, #88d8c0, transparent)",
-            boxShadow: "0 0 10px rgba(136,216,192,.6)",
-            animation: "scan-sweep 4.2s linear .9s infinite",
-          }}
-        />
-      )}
-    </div>
-  );
-}
-
-export function AtlasIntroLoader({ ready }: { ready: boolean }) {
-  const percent = useLoadProgress(ready);
-  const reduceMotion = useReducedMotion();
-
-  return (
-    <motion.div
-      className="fixed inset-0 z-[2147483647] flex items-center justify-center overflow-hidden bg-[#100f0c]"
-      style={{ perspective: reduceMotion ? undefined : 1400 }}
-      variants={stageVariants}
-      initial="hidden"
-      animate="visible"
-      exit="exit"
-    >
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,250,240,.05)_1px,transparent_1px),linear-gradient(180deg,rgba(255,250,240,.04)_1px,transparent_1px)] bg-size-[84px_84px] opacity-50" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(255,255,255,.05)_1px,transparent_1px)] bg-size-[3px_3px] opacity-30" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_48%,transparent_34%,rgba(16,15,12,.88)_100%)]" />
-
-      <motion.div
-        className="pointer-events-none absolute inset-0 bg-[#fffaf0]"
-        variants={reduceMotion ? hiddenVariants : flashVariants}
-      />
-
-      <motion.div
-        className="relative flex flex-col items-center"
-        style={{ transformStyle: reduceMotion ? undefined : "preserve-3d" }}
-        variants={reduceMotion ? reducedSceneVariants : sceneVariants}
-      >
-        <motion.div
-          className="absolute left-1/2 top-1/2 h-[260px] w-[260px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#88d8c0]/50"
-          variants={reduceMotion ? hiddenVariants : ringVariants}
-        />
-        <FacialBlueprint reduceMotion={!!reduceMotion} />
-        <p className="mt-3.5 text-sm font-medium uppercase tracking-[0.34em] text-[#fffaf0]/85">
-          Atlas
-        </p>
-      </motion.div>
-
-      <motion.div
-        className="absolute bottom-[14%] flex flex-col items-center text-center"
-        variants={reduceMotion ? reducedHudVariants : hudVariants}
-      >
-        <div className="mb-3.5 h-px w-36 bg-linear-to-r from-transparent via-[#88d8c0] to-transparent" />
-        <p className="text-[11px] font-semibold uppercase tracking-[0.36em] text-[#88d8c0]/85">
-          Lendo proporcoes faciais
-        </p>
-        <div className="mt-7 flex flex-col items-center gap-2.5">
-          <span className="font-mono text-[13px] font-semibold tracking-[0.08em] text-[#fffaf0]/60 tabular-nums">
-            {percent.toString().padStart(2, "0")}%
-          </span>
-          <div className="h-[1.5px] w-50 overflow-hidden rounded-full bg-[#fffaf0]/12">
-            <div
-              className="h-full rounded-full bg-linear-to-r from-[#88d8c0] to-[#fffaf0] transition-[width] duration-150"
-              style={{ width: `${percent}%` }}
-            />
-          </div>
-        </div>
+          <polyline
+            points="0.157 23.954, 14 23.954, 21.843 48, 43 0, 50 24, 64 24"
+            id="front"
+          />
+        </svg>
       </motion.div>
     </motion.div>
   );

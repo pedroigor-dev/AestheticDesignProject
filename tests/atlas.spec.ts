@@ -5,7 +5,7 @@ test("renders the interactive face atlas and changes regions", async ({ page }) 
 
   await expect(page.getByRole("heading", { name: "Face Atlas" })).toHaveCount(1);
   await expect(page.locator("canvas")).toBeVisible();
-  await expect(page.getByText("Lendo proporcoes faciais")).toBeHidden();
+  await expect(page.getByLabel("Carregando atlas")).toBeHidden({ timeout: 6000 });
   const detailsPanel = page.getByRole("complementary", { name: "Detalhes da regiao" });
   await expect(detailsPanel).toContainText("Escolha uma regiao");
   await expect(page.getByRole("button", { name: "Estetica" })).toHaveAttribute(
