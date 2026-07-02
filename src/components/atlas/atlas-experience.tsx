@@ -87,7 +87,6 @@ export function AtlasExperience() {
   );
 
   const handleWheel = useCallback((event: WheelEvent<HTMLElement>) => {
-    event.preventDefault();
     const delta = event.deltaY > 0 ? -0.06 : 0.06;
     setViewZoom((current) => clampZoom(current + delta));
   }, []);
@@ -150,7 +149,6 @@ export function AtlasExperience() {
       const target = event.target as HTMLElement;
       if (target.closest("button, nav, aside, [data-scene-ui]")) return;
 
-      event.preventDefault();
       if (event.touches.length === 1) {
         const touch = event.touches[0];
         isPointerDown.current = true;
@@ -179,7 +177,6 @@ export function AtlasExperience() {
       const target = event.target as HTMLElement;
       if (target.closest("button, nav, aside, [data-scene-ui]")) return;
 
-      event.preventDefault();
       if (event.touches.length >= 2) {
         const first = event.touches[0];
         const second = event.touches[1];
@@ -218,8 +215,6 @@ export function AtlasExperience() {
   const handleTouchEnd = useCallback((event: TouchEvent<HTMLElement>) => {
     const target = event.target as HTMLElement;
     if (target.closest("button, nav, aside, [data-scene-ui]")) return;
-
-    event.preventDefault();
 
     if (event.touches.length === 1) {
       const touch = event.touches[0];

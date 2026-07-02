@@ -45,14 +45,23 @@ export function FaceHotspot3D({
     document.body.style.cursor = "default";
   };
 
+  const handleSelect = (event: ThreeEvent<MouseEvent>) => {
+    event.stopPropagation();
+    onSelect(region.id);
+  };
+
+  const handleTouchSelect = (event: ThreeEvent<PointerEvent>) => {
+    if ((event.nativeEvent as PointerEvent).pointerType !== "touch") return;
+    event.stopPropagation();
+    onSelect(region.id);
+  };
+
   return (
     <group ref={ref} position={hotspotPositions[region.id]}>
       <mesh
         scale={hotspotScales[region.id]}
-        onClick={(event) => {
-          event.stopPropagation();
-          onSelect(region.id);
-        }}
+        onPointerDown={handleTouchSelect}
+        onClick={handleSelect}
         onPointerOver={handleOver}
         onPointerOut={handleOut}
       >
