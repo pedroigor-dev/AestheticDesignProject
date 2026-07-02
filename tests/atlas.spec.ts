@@ -34,4 +34,11 @@ test("renders the interactive face atlas and changes regions", async ({ page }) 
     "false",
   );
   await expect(detailsPanel).toContainText("Escolha uma regiao");
+
+  await page.getByRole("button", { name: "Abrir gerador de PDF" }).click();
+  await expect(page.getByRole("dialog", { name: "Gerar Atlas em PDF" })).toBeVisible();
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Gerar PDF" }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe("atlas-estetico-facial.pdf");
 });

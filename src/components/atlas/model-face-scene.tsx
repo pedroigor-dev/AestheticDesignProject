@@ -198,7 +198,12 @@ export function ModelFaceScene(props: ModelFaceSceneProps) {
       <Canvas
         camera={{ position: [0, 0.1, 4.8], fov: 28 }}
         dpr={[1, 1.65]}
-        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+        gl={{
+          antialias: true,
+          alpha: true,
+          powerPreference: "high-performance",
+          preserveDrawingBuffer: true,
+        }}
         className="relative z-10 h-full w-full"
       >
         <Suspense fallback={<SceneFallback />}>

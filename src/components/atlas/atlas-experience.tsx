@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Activity, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import {
   PointerEvent,
   WheelEvent,
@@ -15,6 +15,7 @@ import {
   ModelFaceScene,
   ViewControl,
 } from "@/components/atlas/model-face-scene";
+import { AtlasPdfPanel } from "@/components/atlas/atlas-pdf-panel";
 import { RegionCallouts } from "@/components/atlas/region-callouts";
 import { RegionDock } from "@/components/atlas/region-dock";
 import { RegionPanel } from "@/components/atlas/region-panel";
@@ -192,6 +193,7 @@ export function AtlasExperience() {
         <RegionCallouts region={selectedRegion} />
         <ZoomPill zoom={viewZoom} />
         <ResetButton onReset={handleResetView} />
+        <AtlasPdfPanel regions={regions} selectedId={selectedId} />
         <ModeSwitcher mode={atlasMode} onChange={setAtlasMode} />
         <RegionDock regions={regions} selectedId={selectedId} onSelect={handleSelectRegion} />
       </div>
@@ -256,7 +258,7 @@ function ResetButton({ onReset }: { onReset: () => void }) {
 
 function ZoomPill({ zoom }: { zoom: number }) {
   return (
-    <div className="absolute left-4 top-20 z-30 hidden rounded-full border border-black/10 bg-[#fffaf0]/78 px-3 py-2 text-xs font-medium text-black/48 shadow-xl shadow-black/5 backdrop-blur-xl md:block lg:left-8">
+    <div className="absolute left-4 top-20 z-30 hidden text-xs font-medium text-black/48 md:block lg:left-8">
       Scroll para zoom - {Math.round(zoom * 100)}%
     </div>
   );
@@ -266,8 +268,7 @@ function Header() {
   return (
     <header className="absolute left-4 right-4 top-4 z-20 flex items-center justify-between gap-4 lg:left-8 lg:right-[430px] lg:top-7">
       <h1 className="sr-only">Face Atlas</h1>
-      <div className="flex h-11 items-center gap-2 rounded-full border border-black/10 bg-[#fffaf0]/74 px-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-black/48 shadow-xl shadow-black/5 backdrop-blur-xl">
-        <Activity className="size-3.5" />
+      <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-black/48">
         Atlas estetico
       </div>
     </header>

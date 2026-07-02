@@ -3,8 +3,8 @@ import {
   Brain,
   Eye,
   LucideIcon,
+  ScanFace,
   Smile,
-  Sparkles,
   Waves,
 } from "lucide-react";
 
@@ -68,7 +68,7 @@ export const atlasRegions: FaceRegion[] = [
     name: "Nariz",
     shortName: "Nariz",
     kicker: "Centro facial",
-    icon: Sparkles,
+    icon: ScanFace,
     accent: "#f3b36f",
     position: [0, 0.22, 1.03],
     cameraTarget: [0, 0.2, 0.18],
