@@ -12,6 +12,12 @@
 
 # testing
 /coverage
+/tmp
+
+# local reference media
+/public/demonstracao.mp4
+/public/assets/femaleface.glb
+/public/assets/real-face-atlas.png
 
 # next.js
 /.next/
