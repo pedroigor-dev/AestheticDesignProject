@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Face Atlas | Atlas estetico interativo",
+  title: "Face Atlas",
   description:
     "Uma experiencia 3D educativa para explorar regioes do rosto, anatomia e procedimentos esteticos.",
 };
